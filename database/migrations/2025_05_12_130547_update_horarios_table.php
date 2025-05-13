@@ -12,7 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('horarios', function (Blueprint $table) {
-            //
+            $table->id();
+            $table->foreignId('creado_por')->constrained('users')->onDelete('cascade'); // jefe que lo crea
+            $table->string('titulo')->nullable();
+            $table->date('fecha_inicio');
+            $table->date('fecha_fin');
+            $table->timestamps();
         });
     }
 
@@ -21,8 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('horarios', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('horarios');
     }
 };

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Fortify;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -42,5 +43,17 @@ class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('two-factor', function (Request $request) {
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
+
+        Fortify::authenticateThrough(function () {
+            return [
+                \App\Actions\Fortify\AttemptToAuthenticate::class,
+                \App\Actions\Fortify\PrepareAuthenticatedSession::class,
+            ];
+        });
+
+        Fortify::loginView(function () {
+            return view('auth.login'); 
+        });
+
     }
 }

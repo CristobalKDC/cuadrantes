@@ -70,4 +70,16 @@ class User extends Authenticatable
             'es_jefe' => 'boolean',
         ];
     }
+
+    // Horarios que el usuario ha creado (si es jefe)
+    public function horariosCreados()
+    {
+        return $this->hasMany(Horario::class, 'creado_por');
+    }
+
+    // Entradas de horario asignadas a este usuario (si es trabajador)
+    public function entradasHorario()
+    {
+        return $this->hasMany(HorarioEntrada::class, 'user_id');
+    }
 }
