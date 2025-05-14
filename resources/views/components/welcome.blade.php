@@ -19,7 +19,7 @@
             <p class="text-gray-600 text-sm mb-4">
                 Selecciona el rango de fechas, agrega usuarios y define horarios para cada día.
             </p>
-            <a href="" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition">
+            <a href="{{ route('cuadrantes.create') }}" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition">
                 Crear
             </a>
         </div>
@@ -41,7 +41,7 @@
             <p class="text-gray-600 text-sm mb-4">
                 Consulta todos los cuadrantes disponibles filtrando por mes o usuario.
             </p>
-            <a href="" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+            <a href="{{ route('cuadrantes.index') }}" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
                 Ver Cuadrantes
             </a>
         </div>

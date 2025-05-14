@@ -12,12 +12,32 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('horarios', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('creado_por')->constrained('users')->onDelete('cascade'); // jefe que lo crea
-            $table->string('titulo')->nullable();
-            $table->date('fecha_inicio');
-            $table->date('fecha_fin');
-            $table->timestamps();
+            // Verifica si la columna 'creado_por' ya existe antes de agregarla
+            if (!Schema::hasColumn('horarios', 'creado_por')) {
+                $table->foreignId('creado_por')->constrained('users')->onDelete('cascade');
+            }
+
+            // Agregar las demás columnas si no existen
+            if (!Schema::hasColumn('horarios', 'titulo')) {
+                $table->string('titulo')->nullable();
+            }
+
+            if (!Schema::hasColumn('horarios', 'fecha_inicio')) {
+                $table->date('fecha_inicio');
+            }
+
+            if (!Schema::hasColumn('horarios', 'fecha_fin')) {
+                $table->date('fecha_fin');
+            }
+
+            // Verifica si las columnas 'created_at' y 'updated_at' ya existen antes de agregarlas
+            if (!Schema::hasColumn('horarios', 'created_at')) {
+                $table->timestamp('created_at')->nullable();
+            }
+
+            if (!Schema::hasColumn('horarios', 'updated_at')) {
+                $table->timestamp('updated_at')->nullable();
+            }
         });
     }
 
@@ -26,6 +46,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('horarios');
+        Schema::table('horarios', function (Blueprint $table) {
+            $table->dropColumn(['creado_por', 'titulo', 'fecha_inicio', 'fecha_fin', 'created_at', 'updated_at']);
+        });
     }
 };
