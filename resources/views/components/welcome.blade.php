@@ -30,7 +30,7 @@
             <p class="text-gray-600 text-sm mb-4">
                 Edita cuadrantes existentes para cambiar usuarios, horarios o fechas.
             </p>
-            <a href="" class="inline-block bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
+            <a href="{{ route('cuadrantes.modificar') }}" class="inline-block bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
                 Modificar
             </a>
         </div>
@@ -39,7 +39,7 @@
         <div class="bg-white p-6 rounded-lg shadow hover:shadow-md transition">
             <h2 class="text-xl font-semibold text-gray-800 mb-2">Listar Cuadrantes</h2>
             <p class="text-gray-600 text-sm mb-4">
-                Consulta todos los cuadrantes disponibles filtrando por mes o usuario.
+                Consulta los cuadrantes disponibles. Ajusta los usuaros agregados a los cuadrantes y los horarios.
             </p>
             <a href="{{ route('cuadrantes.index') }}" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
                 Ver Cuadrantes
@@ -47,13 +47,4 @@
         </div>
 
     </div>
-</div>
-
-
-
-    
-
-   
-
-    
 </div>

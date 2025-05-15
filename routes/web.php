@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CuadranteController;
 use App\Http\Controllers\HorarioController;
+use App\Http\Controllers\HorarioEntradaController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -38,5 +39,13 @@ Route::get('/cuadrantes/crear', [CuadranteController::class, 'create'])->name('c
 Route::post('/cuadrantes/store', [CuadranteController::class, 'store'])->name('cuadrantes.store');
 Route::get('/cuadrantes', [\App\Http\Controllers\CuadranteController::class, 'index'])->name('cuadrantes.index'); //Listar los cuadrantes
 Route::delete('/cuadrantes/{id}', [\App\Http\Controllers\CuadranteController::class, 'destroy'])->name('cuadrantes.destroy');
+Route::get('/cuadrantes/modificar', [CuadranteController::class, 'modificarVista'])->name('cuadrantes.modificar');
+Route::get('/cuadrantes/{cuadrante}/editar', [CuadranteController::class, 'edit'])->name('cuadrantes.edit');
+Route::put('/cuadrantes/{cuadrante}', [CuadranteController::class, 'update'])->name('cuadrantes.update');
+
+Route::post('/horarios/{horario}/entradas/guardar', [HorarioEntradaController::class, 'guardar'])->name('horarios.entradas.guardar');
+
+Route::delete('/horarios/{horario}/vaciar', [HorarioController::class, 'vaciar'])->name('horarios.vaciar');
 
 Route::resource('horarios', HorarioController::class);
+

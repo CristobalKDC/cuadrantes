@@ -1,0 +1,23 @@
+{
+    "Profile": "Perfil",
+    "Log Out": "Cerrar sesión",
+    "Manage Account": "Gestionar cuenta",
+    "API Tokens": "Tokens de API",
+    "Browser Sessions": "Sesiones del navegador",
+    "Delete Account": "Eliminar cuenta",
+    "Email": "Correo electrónico",
+    "Password": "Contraseña",
+    "Confirm": "Confirmar",
+    "Save": "Guardar",
+    "Saved.": "Guardado.",
+    "Update Password": "Actualizar contraseña",
+    "Current Password": "Contraseña actual",
+    "New Password": "Nueva contraseña",
+    "Confirm Password": "Confirmar contraseña",
+    "Two Factor Authentication": "Autenticación en dos factores",
+    "Enable": "Activar",
+    "Disable": "Desactivar",
+    "Logout Other Browser Sessions": "Cerrar otras sesiones del navegador",
+    "Done.": "Hecho.",
+    "Cancel": "Cancelar"
+}

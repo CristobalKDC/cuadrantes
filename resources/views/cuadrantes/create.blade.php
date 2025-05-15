@@ -8,7 +8,12 @@
     <div class="py-12" x-data="calendarRange" x-init="init()">
 
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 flex justify-center">
+           
+            
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-10 text-center ">
+                <a href="{{ route('dashboard') }}" class="inline-block mb-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition text-sm">
+                ← Volver
+            </a>
                 <h3 class="text-2xl font-bold mb-6">Selecciona el rango de fechas</h3>
 
                 <!-- Calendario directamente visible -->
@@ -26,7 +31,7 @@
                     <!-- Titulo -->
                     <div class="mb-4">
                         <label for="titulo" class="block text-left text-lg font-medium text-gray-700">Título</label>
-                        <input type="text" id="titulo" name="titulo" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Ingresa el título del cuadrante" required>
+                        <input type="text" id="titulo" name="titulo" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Ingresa el título del cuadrante">
                     </div>
 
                     <input type="hidden" name="fecha_inicio" :value="inicio">

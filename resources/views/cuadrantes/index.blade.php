@@ -27,7 +27,7 @@
                                 <td class="border p-2">{{ $cuadrante->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="border p-2 flex items-center gap-2">
                                     <a href="{{ route('horarios.show', $cuadrante->id) }}" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">
-                                        Ver
+                                        Modificar horarios
                                     </a>
 
                                     <form action="{{ route('cuadrantes.destroy', $cuadrante->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este cuadrante?');">
