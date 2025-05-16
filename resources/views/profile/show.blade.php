@@ -6,7 +6,12 @@
     </x-slot>
 
     <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-        <a href="{{ route('dashboard') }}" class="inline-block mb-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition text-sm">
+         <!-- Botón Volver al menú principal -->
+         @php
+            $esJefe = auth()->check() && auth()->user()->es_jefe == 1;
+        @endphp
+
+        <a href="{{ $esJefe ? route('dashboard') : route('vista.usuario') }}" class="inline-block mb-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition text-sm">
             ← Volver al menú principal
         </a>
 

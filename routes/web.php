@@ -7,6 +7,7 @@ use App\Http\Controllers\CuadranteController;
 use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\HorarioEntradaController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\CuadrantesController; // Corrige la importación
 
 Route::get('/', function () {
     return view('welcome');
@@ -43,6 +44,7 @@ Route::delete('/cuadrantes/{id}', [\App\Http\Controllers\CuadranteController::cl
 Route::get('/cuadrantes/modificar', [CuadranteController::class, 'modificarVista'])->name('cuadrantes.modificar');
 Route::get('/cuadrantes/{cuadrante}/editar', [CuadranteController::class, 'edit'])->name('cuadrantes.edit');
 Route::put('/cuadrantes/{cuadrante}', [CuadranteController::class, 'update'])->name('cuadrantes.update');
+Route::get('/cuadrantes/usuario', [HorarioController::class, 'usuario'])->name('cuadrantes.usuario');
 
 Route::post('/horarios/{horario}/entradas/guardar', [HorarioController::class, 'guardarEntradas'])->name('horarios.entradas.guardar');
 

@@ -79,6 +79,7 @@
                 <label for="mostrar_apodo" class="text-sm text-gray-700">¿Usar apodo?</label>
             </div>
             <div id="apodo-input-group" style="{{ !empty($state['apodo']) ? '' : 'display:none;' }}">
+                
                 <label for="apodo" class="block text-sm font-medium text-gray-700">Apodo</label>
                 <x-input
                     type="text"
@@ -87,9 +88,12 @@
                     wire:model.defer="state.apodo"
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
                     maxlength="255"
+                    placeholder="Sin apodo"
                 />
                 <x-input-error for="apodo" class="mt-2" />
+                <p class="text-sm text-gray-500 mt-1">Para eliminar el apodo, vaciar el cuadro de apodo.</p>
             </div>
+            
         </div>
         <!-- Fin apodo -->
 
@@ -115,6 +119,8 @@
                 @endif
             @endif
         </div>
+
+       
     </x-slot>
 
     <x-slot name="actions">

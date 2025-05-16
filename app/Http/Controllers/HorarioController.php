@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Horario;
 use App\Models\HorarioEntrada;
 use App\Models\User;
+use App\Models\Cuadrante; // Asegúrate de que esta línea esté presente
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -142,5 +143,14 @@ class HorarioController extends Controller
         $horario->entradas()->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    public function usuario()
+    {
+        $cuadrantes = Horario::whereHas('entradas', function ($query) {
+            $query->where('user_id', Auth::id());
+        })->get();
+
+        return view('cuadrantes.cuadrantesUsuario', compact('cuadrantes'));
     }
 }

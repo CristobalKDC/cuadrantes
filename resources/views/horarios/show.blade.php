@@ -18,12 +18,15 @@
 
     <div class="py-6" x-data="cuadrante()">
         <div class="w-[80%] mx-auto sm:px-6 lg:px-8 bg-white p-6 shadow rounded" style="overflow-x:auto;">
-            <a href="{{ route('cuadrantes.index') }}" class="inline-block mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition text-sm ml-2">
+            <a href="{{ $es_jefe ? route('cuadrantes.index') : route('cuadrantes.usuario') }}" class="inline-block mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition text-sm ml-2">
                 ← Volver a todos los cuadrantes
             </a>
-            <a href="{{ route('dashboard') }}" class="inline-block mb-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition text-sm">
-                ← Volver al menú principal.
-            </a>
+            @if($es_jefe)
+                <a href="{{ route('dashboard') }}" class="inline-block mb-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition text-sm">
+                    ← Volver al menú principal.
+                </a>
+            @endif
+            @if($es_jefe)
             <button
                 id="vaciar-cuadrante-btn"
                 class="inline-block mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition text-sm ml-2"
@@ -31,6 +34,7 @@
             >
                 Vaciar cuadrante
             </button>
+            @endif
 
             <div class="flex justify-end items-center mb-2 gap-2">
                 <button
@@ -63,28 +67,43 @@
                         <tr>
                             <th class="border p-2">Nombre</th>
                             <template x-for="(fecha, idx) in fechas.slice(fechaStart, Math.min(fechaStart + maxDias, fechas.length))" :key="fecha">
-                                <th class="border p-2" x-text="new Date(fecha).toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: '2-digit' })"></th>
+                                <th class="border p-2" x-text="new Date(fecha).toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: '2-digit' }).replace(/^\w/, c => c.toUpperCase())"></th>
                             </template>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody>
                         <template x-for="selectedUser in selectedUsers" :key="selectedUser.id">
                             <tr>
                                 <td class="border p-2 font-semibold text-center align-middle">
-                                    <span
-                                        x-text="(selectedUser.apodo ?? selectedUser.name) + ' ' + selectedUser.apellidos"
-                                        class="cursor-pointer hover:underline text-blue-600"
-                                        @click="mostrarAccionesUsuario(selectedUser)"
-                                        style="display: inline-block; width: 100%; height: 100%; vertical-align: middle;"
-                                    ></span>
+                                    @if($es_jefe)
+                                        <span
+                                            x-text="(selectedUser.apodo && selectedUser.apodo.trim() !== '' ? selectedUser.apodo : selectedUser.name) + ' ' + selectedUser.apellidos"
+                                            class="cursor-pointer hover:underline text-blue-600"
+                                            @click="mostrarAccionesUsuario(selectedUser)"
+                                            style="display: inline-block; width: 100%; height: 100%; vertical-align: middle;"
+                                        ></span>
+                                    @else
+                                        <span
+                                            x-text="(selectedUser.apodo && selectedUser.apodo.trim() !== '' ? selectedUser.apodo : selectedUser.name) + ' ' + selectedUser.apellidos"
+                                            class="text-gray-800"
+                                            style="display: inline-block; width: 100%; height: 100%; vertical-align: middle;"
+                                        ></span>
+                                    @endif
                                 </td>
                                 <template x-for="(fecha, idx) in fechas.slice(fechaStart, Math.min(fechaStart + maxDias, fechas.length))" :key="fecha">
-                                    <td class="border p-2">
+                                    <td
+                                        class="border p-2"
+                                        :class="{
+                                            'bg-yellow-100': new Date(fecha) > new Date(), // Día futuro
+                                            'bg-orange-100': new Date(fecha) < new Date().setHours(0, 0, 0, 0), // Día pasado
+                                            'bg-green-100': new Date(fecha).toDateString() === new Date().toDateString() // Día actual
+                                        }"
+                                    >
                                         <template x-if="selectedUser.entradas && selectedUser.entradas[fecha] && Array.isArray(selectedUser.entradas[fecha]) && selectedUser.entradas[fecha].length">
                                             <div>
                                                 <template x-for="(entrada, idx2) in selectedUser.entradas[fecha]" :key="idx2">
-                                                    <div class="mb-1 flex items-center justify-between">
-                                                        <span x-text="entrada.hora_inicio.substring(0,5) + ' a ' + entrada.hora_fin.substring(0,5)"></span>
+                                                    <div class="mb-1 flex items-center justify-center text-center">
+                                                        <span x-text="'De ' + entrada.hora_inicio.substring(0,5) + ' a ' + entrada.hora_fin.substring(0,5)"></span>
                                                         @if($es_jefe)
                                                         <div class="flex items-center gap-1">
                                                             <button
@@ -245,9 +264,11 @@
 
             <div class="mt-6 text-right">
                 <form @submit.prevent="guardarEntradas">
+                    @if($es_jefe)
                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                         Guardar
                     </button>
+                    @endif
                 </form>
             </div>
         </div>
@@ -287,6 +308,14 @@
                     });
                     return usuarios;
                 })(),
+                init() {
+                    // Calcular la posición inicial para mostrar la franja de 7 días que incluye la fecha actual
+                    const today = new Date().toISOString().split('T')[0]; // Obtener la fecha actual en formato YYYY-MM-DD
+                    const indexToday = this.fechas.findIndex(fecha => fecha === today);
+                    if (indexToday !== -1) {
+                        this.fechaStart = Math.max(0, indexToday - Math.floor(this.maxDias / 2));
+                    }
+                },
                 filteredUsers() {
                     if (this.userSearchQuery === '') return this.users;
                     return this.users.filter(user =>
@@ -544,7 +573,7 @@
                 },
                 mostrarAccionesUsuario(selectedUser) {
                     Swal.fire({
-                        title: (selectedUser.apodo ?? selectedUser.name) + ' ' + selectedUser.apellidos,
+                        title: (selectedUser.apodo && selectedUser.apodo.trim() !== '' ? selectedUser.apodo : selectedUser.name) + ' ' + selectedUser.apellidos,
                         showCancelButton: true,
                         showDenyButton: true,
                         confirmButtonText: 'Cambiar usuario',
