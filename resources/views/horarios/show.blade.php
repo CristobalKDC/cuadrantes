@@ -1,3 +1,8 @@
+@php
+    // Definir la variable ANTES de cualquier uso en la vista
+    $es_jefe = auth()->check() && isset(auth()->user()->es_jefe) && auth()->user()->es_jefe == 1;
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -12,7 +17,7 @@
     </x-slot>
 
     <div class="py-6" x-data="cuadrante()">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 bg-white p-6 shadow rounded">
+        <div class="w-[80%] mx-auto sm:px-6 lg:px-8 bg-white p-6 shadow rounded" style="overflow-x:auto;">
             <a href="{{ route('cuadrantes.index') }}" class="inline-block mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition text-sm ml-2">
                 ← Volver a todos los cuadrantes
             </a>
@@ -27,48 +32,81 @@
                 Vaciar cuadrante
             </button>
 
+            <div class="flex justify-end items-center mb-2 gap-2">
+                <button
+                    x-show="fechaStart > 0"
+                    @click="fechaStart = Math.max(0, fechaStart - maxDias)"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-2 py-1 rounded"
+                    title="Ver días anteriores"
+                >
+                    &#8592;
+                </button>
+                <button
+                    x-show="fechaStart + maxDias < fechas.length"
+                    @click="
+                        let resto = fechas.length - (fechaStart + maxDias);
+                        if (resto > maxDias) {
+                            fechaStart = fechaStart + maxDias;
+                        } else {
+                            fechaStart = fechas.length - resto;
+                        }
+                    "
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-2 py-1 rounded"
+                    title="Ver días siguientes"
+                >
+                    &#8594;
+                </button>
+            </div>
             <div class="overflow-x-auto">
                 <table class="table-auto min-w-max w-full text-center border">
                     <thead class="bg-gray-100">
                         <tr>
                             <th class="border p-2">Nombre</th>
-                            @foreach($fechas as $fecha)
-                                <th class="border p-2">
-                                    {{ \Illuminate\Support\Str::ucfirst(\Carbon\Carbon::parse($fecha)->locale('es')->translatedFormat('l d/m')) }}
-                                </th>
-                            @endforeach
-                            <th class="border p-2">Acciones</th>
+                            <template x-for="(fecha, idx) in fechas.slice(fechaStart, Math.min(fechaStart + maxDias, fechas.length))" :key="fecha">
+                                <th class="border p-2" x-text="new Date(fecha).toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: '2-digit' })"></th>
+                            </template>
                         </tr>
                     </thead>
                     <tbody></tbody>
                         <template x-for="selectedUser in selectedUsers" :key="selectedUser.id">
                             <tr>
-                                <td class="border p-2 font-semibold text-left">
-                                    <div>
-                                        <span x-text="(selectedUser.apodo ?? selectedUser.name) + ' ' + selectedUser.apellidos"></span>
-                                        
-                                    </div>
+                                <td class="border p-2 font-semibold text-center align-middle">
+                                    <span
+                                        x-text="(selectedUser.apodo ?? selectedUser.name) + ' ' + selectedUser.apellidos"
+                                        class="cursor-pointer hover:underline text-blue-600"
+                                        @click="mostrarAccionesUsuario(selectedUser)"
+                                        style="display: inline-block; width: 100%; height: 100%; vertical-align: middle;"
+                                    ></span>
                                 </td>
-
-                                <template x-for="fecha in fechas" :key="fecha">
+                                <template x-for="(fecha, idx) in fechas.slice(fechaStart, Math.min(fechaStart + maxDias, fechas.length))" :key="fecha">
                                     <td class="border p-2">
                                         <template x-if="selectedUser.entradas && selectedUser.entradas[fecha] && Array.isArray(selectedUser.entradas[fecha]) && selectedUser.entradas[fecha].length">
                                             <div>
-                                                <template x-for="(entrada, idx) in selectedUser.entradas[fecha]" :key="idx">
+                                                <template x-for="(entrada, idx2) in selectedUser.entradas[fecha]" :key="idx2">
                                                     <div class="mb-1 flex items-center justify-between">
                                                         <span x-text="entrada.hora_inicio.substring(0,5) + ' a ' + entrada.hora_fin.substring(0,5)"></span>
-                                                        <div>
-                                                            <button 
-                                                                class="ml-2 text-xs text-blue-600 hover:underline"
-                                                                @click="abrirModalHorario(selectedUser, fecha, idx)">
-                                                                Editar
+                                                        @if($es_jefe)
+                                                        <div class="flex items-center gap-1">
+                                                            <button
+                                                                class="ml-2 text-xs text-blue-600 hover:text-blue-800"
+                                                                @click="abrirModalHorario(selectedUser, fecha, idx2)"
+                                                                title="Editar"
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a4 4 0 01-2.828 1.172H7v-2a4 4 0 011.172-2.828z" />
+                                                                </svg>
                                                             </button>
                                                             <button
-                                                                class="ml-2 text-xs text-red-600 hover:underline"
-                                                                @click="eliminarHorario(selectedUser, fecha, idx)">
-                                                                Eliminar
+                                                                class="ml-2 text-xs text-red-600 hover:text-red-800"
+                                                                @click="eliminarHorario(selectedUser, fecha, idx2)"
+                                                                title="Eliminar"
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
                                                             </button>
                                                         </div>
+                                                        @endif
                                                     </div>
                                                 </template>
                                             </div>
@@ -78,44 +116,32 @@
                                                 <span class="text-gray-400 text-xs">Sin horario</span>
                                             </div>
                                         </template>
+                                        @if($es_jefe)
                                         <button
                                             class="bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 text-sm mt-1"
                                             @click="abrirModalHorario(selectedUser, fecha)">
                                             +
                                         </button>
+                                        @endif
                                     </td>
                                 </template>
-                                <td class="border p-2">
-                                    <div class="mt-1">
-                                        <button
-                                            type="button"
-                                            class="bg-yellow-400 text-gray-800 px-2 py-1 rounded text-xs hover:bg-yellow-500"
-                                            @click="abrirCambiarUsuario(selectedUser)"
-                                            title="Cambiar usuario"
-                                        >
-                                            Cambiar usuario
-                                        </button>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 text-xs"
-                                        @click="eliminarUsuario(selectedUser.id)"
-                                    >
-                                        Eliminar
-                                    </button>
-                                </td>
+                                
                             </tr>
                         </template>
+                        @if($es_jefe)
                         <tr>
-                            <td class="border p-2 font-semibold text-left">
-                                <button type="button" class="bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700" @click="openUserModal()">
-                                    Añadir usuario
-                                </button>
+                            <td class="border p-2 font-semibold text-center align-middle">
+                                <div class="flex justify-center items-center h-full">
+                                    <button type="button" class="bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700" @click="openUserModal()">
+                                        Añadir usuario
+                                    </button>
+                                </div>
                             </td>
-                            @foreach($fechas as $fecha)
+                            <template x-for="(fecha, idx) in fechas.slice(fechaStart, Math.min(fechaStart + maxDias, fechas.length))" :key="fecha">
                                 <td class="border p-2">-</td>
-                            @endforeach
+                            </template>
                         </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -244,6 +270,8 @@
                 cambiarUsuarioIdx: null,
                 users: @json($usuarios),
                 fechas: @json($fechas),
+                maxDias: 7,
+                fechaStart: 0,
                 selectedUsers: (() => {
                     // Normalizar entradas para que siempre sean arrays
                     let usuarios = @json($usuariosConEntrada);
@@ -289,6 +317,46 @@
                         this.selectedUsers.push(user);
                     }
                     this.closeUserModal();
+
+                    // Guardar automáticamente el usuario sin horarios (campos null)
+                    let payload = [{
+                        user_id: user.id,
+                        fecha: null,
+                        hora_inicio: null,
+                        hora_fin: null,
+                    }];
+
+                    fetch(`{{ route('horarios.entradas.guardar', ['horario' => $horario->id]) }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            entradas: payload
+                        })
+                    })
+                    .then(response => {
+                        const contentType = response.headers.get('content-type');
+                        if (!response.ok) throw new Error('Error al guardar');
+                        if (contentType && contentType.indexOf('application/json') !== -1) {
+                            return response.json();
+                        } else {
+                            throw new Error('Respuesta inesperada del servidor');
+                        }
+                    })
+                    .then(data => {
+                        // Opcional: mostrar mensaje o recargar usuarios si quieres feedback inmediato
+                        // Swal.fire({ icon: 'success', title: 'Usuario añadido', text: 'Usuario añadido correctamente' });
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Hubo un error al añadir el usuario. Por favor, revisa los datos o inténtalo de nuevo.'
+                        });
+                    });
                 },
                 abrirModalHorario(user, fecha, idx = null) {
                     this.modalUser = user;
@@ -473,6 +541,23 @@
                         };
                     }
                     this.cerrarCambiarUsuario();
+                },
+                mostrarAccionesUsuario(selectedUser) {
+                    Swal.fire({
+                        title: (selectedUser.apodo ?? selectedUser.name) + ' ' + selectedUser.apellidos,
+                        showCancelButton: true,
+                        showDenyButton: true,
+                        confirmButtonText: 'Cambiar usuario',
+                        denyButtonText: 'Eliminar',
+                        cancelButtonText: 'Cancelar',
+                        icon: 'info'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.abrirCambiarUsuario(selectedUser);
+                        } else if (result.isDenied) {
+                            this.eliminarUsuario(selectedUser.id);
+                        }
+                    });
                 },
             }));
         });

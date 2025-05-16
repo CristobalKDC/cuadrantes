@@ -59,6 +59,40 @@
             <x-input-error for="name" class="mt-2" />
         </div>
 
+        <!-- Apellidos -->
+        <div class="col-span-6 sm:col-span-4">
+            <x-label for="apellidos" value="Apellidos" />
+            <x-input id="apellidos" type="text" class="mt-1 block w-full" wire:model="state.apellidos" autocomplete="family-name" />
+            <x-input-error for="apellidos" class="mt-2" />
+        </div>
+
+        <!-- Apodo con checkbox -->
+        <div class="col-span-6 sm:col-span-4">
+            <div class="mb-4 flex items-center">
+                <input
+                    type="checkbox"
+                    id="mostrar_apodo"
+                    {{ !empty($state['apodo']) ? 'checked' : '' }}
+                    onclick="document.getElementById('apodo-input-group').style.display = this.checked ? 'block' : 'none';"
+                    class="mr-2"
+                >
+                <label for="mostrar_apodo" class="text-sm text-gray-700">¿Usar apodo?</label>
+            </div>
+            <div id="apodo-input-group" style="{{ !empty($state['apodo']) ? '' : 'display:none;' }}">
+                <label for="apodo" class="block text-sm font-medium text-gray-700">Apodo</label>
+                <x-input
+                    type="text"
+                    name="apodo"
+                    id="apodo"
+                    wire:model.defer="state.apodo"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                    maxlength="255"
+                />
+                <x-input-error for="apodo" class="mt-2" />
+            </div>
+        </div>
+        <!-- Fin apodo -->
+
         <!-- Email -->
         <div class="col-span-6 sm:col-span-4">
             <x-label for="email" value="{{ __('Email') }}" />

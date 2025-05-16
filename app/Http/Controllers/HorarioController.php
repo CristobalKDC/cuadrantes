@@ -6,6 +6,7 @@ use App\Models\Horario;
 use App\Models\HorarioEntrada;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -76,7 +77,7 @@ class HorarioController extends Controller
         return view('horarios.show', compact('horario', 'fechas', 'usuarios', 'usuariosConEntrada'));
     }
 
-    public function guardarEntradas(Request $request, Horario $horario)
+    public function guardarEntradas(Request $request, Horario $horario): JsonResponse
     {
         $request->validate([
             'entradas' => 'required|array',
@@ -94,12 +95,27 @@ class HorarioController extends Controller
             ])->header('Content-Type', 'application/json');
         }
 
-        // Para cada usuario, guarda al menos una entrada vacía si no tiene horarios
         $usuariosProcesados = [];
         foreach ($request->entradas as $entrada) {
             $userId = $entrada['user_id'];
-            // Si tiene horario, guarda la entrada (asegura que no sean strings vacíos)
-            if (
+
+            // Si NO tiene horario (fecha, hora_inicio, hora_fin son null o vacíos), crea entrada vacía
+            $sinHorario = (
+                (!isset($entrada['fecha']) || $entrada['fecha'] === null || $entrada['fecha'] === '') &&
+                (!isset($entrada['hora_inicio']) || $entrada['hora_inicio'] === null || $entrada['hora_inicio'] === '') &&
+                (!isset($entrada['hora_fin']) || $entrada['hora_fin'] === null || $entrada['hora_fin'] === '')
+            );
+
+            if ($sinHorario && empty($usuariosProcesados[$userId])) {
+                HorarioEntrada::create([
+                    'horario_id' => $horario->id,
+                    'user_id' => $userId,
+                    'fecha' => null,
+                    'hora_inicio' => null,
+                    'hora_fin' => null,
+                ]);
+                $usuariosProcesados[$userId] = true;
+            } elseif (
                 isset($entrada['fecha']) && $entrada['fecha'] !== null && $entrada['fecha'] !== '' &&
                 isset($entrada['hora_inicio']) && $entrada['hora_inicio'] !== null && $entrada['hora_inicio'] !== '' &&
                 isset($entrada['hora_fin']) && $entrada['hora_fin'] !== null && $entrada['hora_fin'] !== ''
@@ -112,22 +128,9 @@ class HorarioController extends Controller
                     'hora_fin' => $entrada['hora_fin'],
                 ]);
                 $usuariosProcesados[$userId] = true;
-            } else {
-                // Si no tiene horario, solo crea una entrada vacía si no la hemos creado ya para este usuario
-                if (empty($usuariosProcesados[$userId])) {
-                    HorarioEntrada::create([
-                        'horario_id' => $horario->id,
-                        'user_id' => $userId,
-                        'fecha' => null,
-                        'hora_inicio' => null,
-                        'hora_fin' => null,
-                    ]);
-                    $usuariosProcesados[$userId] = true;
-                }
             }
         }
 
-        // Forzar respuesta JSON con el header correcto y sin pretty print
         return response()->json([
             'success' => true,
             'message' => 'Usuarios y horarios guardados correctamente'
