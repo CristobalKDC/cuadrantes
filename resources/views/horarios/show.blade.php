@@ -95,53 +95,71 @@
                                         class="border p-2"
                                         :class="{
                                             'bg-yellow-100': new Date(fecha) > new Date(), // Día futuro
-                                            'bg-orange-100': new Date(fecha) < new Date().setHours(0, 0, 0, 0), // Día pasado
+                                            'bg-red-100': new Date(fecha) < new Date().setHours(0, 0, 0, 0), // Día pasado
                                             'bg-green-100': new Date(fecha).toDateString() === new Date().toDateString() // Día actual
                                         }"
                                     >
                                         <template x-if="selectedUser.entradas && selectedUser.entradas[fecha] && Array.isArray(selectedUser.entradas[fecha]) && selectedUser.entradas[fecha].length">
                                             <div>
                                                 <template x-for="(entrada, idx2) in selectedUser.entradas[fecha]" :key="idx2">
-                                                    <div class="mb-1 flex items-center justify-center text-center">
-                                                        <span x-text="'De ' + entrada.hora_inicio.substring(0,5) + ' a ' + entrada.hora_fin.substring(0,5)"></span>
+                                                    <div class="mb-1 flex items-center justify-center text-center gap-2">
                                                         @if($es_jefe)
-                                                        <div class="flex items-center gap-1">
-                                                            <button
-                                                                class="ml-2 text-xs text-blue-600 hover:text-blue-800"
-                                                                @click="abrirModalHorario(selectedUser, fecha, idx2)"
-                                                                title="Editar"
-                                                            >
-                                                                <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a4 4 0 01-2.828 1.172H7v-2a4 4 0 011.172-2.828z" />
-                                                                </svg>
-                                                            </button>
-                                                            <button
-                                                                class="ml-2 text-xs text-red-600 hover:text-red-800"
-                                                                @click="eliminarHorario(selectedUser, fecha, idx2)"
-                                                                title="Eliminar"
-                                                            >
-                                                                <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                                </svg>
-                                                            </button>
-                                                        </div>
+                                                        <input
+                                                            type="checkbox"
+                                                            :id="'check-' + selectedUser.id + '-' + fecha + '-' + idx2"
+                                                            x-model="checkedEntradas"
+                                                            :value="selectedUser.id + '|' + fecha + '|' + idx2"
+                                                            class="mr-2"
+                                                        >
                                                         @endif
+                                                        <span x-text="'De ' + entrada.hora_inicio.substring(0,5) + ' a ' + entrada.hora_fin.substring(0,5)"></span>
                                                     </div>
                                                 </template>
+                                                @if($es_jefe)
+                                                <div class="mt-1 flex items-center justify-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        :id="'add-' + selectedUser.id + '-' + fecha"
+                                                        x-model="checkedCrear"
+                                                        :value="selectedUser.id + '|' + fecha"
+                                                        class="mr-2"
+                                                    >
+                                                    <label :for="'add-' + selectedUser.id + '-' + fecha" class="text-indigo-700 cursor-pointer text-sm">Añadir horario</label>
+                                                    
+                                                </div>
+                                                @endif
                                             </div>
                                         </template>
                                         <template x-if="!selectedUser.entradas || !selectedUser.entradas[fecha] || (Array.isArray(selectedUser.entradas[fecha]) && selectedUser.entradas[fecha].length === 0)">
                                             <div>
-                                                <span class="text-gray-400 text-xs">Sin horario</span>
+                                                <span class="text-gray-400 text-xs" x-show="!checkedCrear.includes(selectedUser.id + '|' + fecha)">Sin horario</span>
+                                                @if($es_jefe)
+                                                <div class="mt-1 flex items-center justify-center">
+                                                    <button
+                                                        type="button"
+                                                        class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-sm"
+                                                        @click="checkedCrear.push(selectedUser.id + '|' + fecha)"
+                                                        x-show="!checkedCrear.includes(selectedUser.id + '|' + fecha)"
+                                                    >
+                                                        Crear horario
+                                                    </button>
+                                                    <template x-if="checkedCrear.includes(selectedUser.id + '|' + fecha)">
+                                                        <div class="flex items-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                :id="'crear-' + selectedUser.id + '-' + fecha"
+                                                                x-model="checkedCrear"
+                                                                :value="selectedUser.id + '|' + fecha"
+                                                                class="mr-2"
+                                                            >
+                                                            <label :for="'crear-' + selectedUser.id + '-' + fecha" class="text-indigo-700 cursor-pointer text-sm">Crear horario</label>
+                                                            
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                                @endif
                                             </div>
                                         </template>
-                                        @if($es_jefe)
-                                        <button
-                                            class="bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 text-sm mt-1"
-                                            @click="abrirModalHorario(selectedUser, fecha)">
-                                            +
-                                        </button>
-                                        @endif
                                     </td>
                                 </template>
                                 
@@ -262,373 +280,483 @@
                 </div>
             </div>
 
-            <div class="mt-6 text-right">
+            @if($es_jefe)
+            <div class="mt-6 flex flex-row justify-between items-center">
+                <div class="flex gap-2">
+                    <template x-if="checkedCrear.length > 0">
+                        <button
+                            type="button"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                            @click="crearSeleccionados"
+                        >
+                            Crear horarios seleccionados
+                        </button>
+                    </template>
+                    <template x-if="checkedEntradas.length > 0">
+                        <button
+                            type="button"
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                            @click="modificarSeleccionados"
+                        >
+                            Modificar seleccionados
+                        </button>
+                    </template>
+                    <template x-if="checkedEntradas.length > 0">
+                        <button
+                            type="button"
+                            class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                            @click="eliminarSeleccionados"
+                        >
+                            Eliminar seleccionados
+                        </button>
+                    </template>
+                </div>
                 <form @submit.prevent="guardarEntradas">
-                    @if($es_jefe)
                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                         Guardar
                     </button>
-                    @endif
                 </form>
             </div>
-        </div>
-    </div>
+            @endif
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('cuadrante', () => ({
-                isUserModalOpen: false,
-                userSearchQuery: '',
-                isHorarioModalOpen: false,
-                modalUser: null,
-                modalFecha: null,
-                modalHoraInicio: '',
-                modalHoraFin: '',
-                modalEntradaIdx: null,
-                isCambiarUsuarioModalOpen: false,
-                cambiarUserSearchQuery: '',
-                cambiarUsuarioIdx: null,
-                users: @json($usuarios),
-                fechas: @json($fechas),
-                maxDias: 7,
-                fechaStart: 0,
-                selectedUsers: (() => {
-                    // Normalizar entradas para que siempre sean arrays
-                    let usuarios = @json($usuariosConEntrada);
-                    usuarios.forEach(user => {
-                        if (user.entradas) {
-                            Object.keys(user.entradas).forEach(fecha => {
-                                if (!Array.isArray(user.entradas[fecha])) {
-                                    // Si es un objeto simple, conviértelo en array
-                                    user.entradas[fecha] = [user.entradas[fecha]];
-                                }
-                            });
-                        }
-                    });
-                    return usuarios;
-                })(),
-                init() {
-                    // Calcular la posición inicial para mostrar la franja de 7 días que incluye la fecha actual
-                    const today = new Date().toISOString().split('T')[0]; // Obtener la fecha actual en formato YYYY-MM-DD
-                    const indexToday = this.fechas.findIndex(fecha => fecha === today);
-                    if (indexToday !== -1) {
-                        this.fechaStart = Math.max(0, indexToday - Math.floor(this.maxDias / 2));
-                    }
-                },
-                filteredUsers() {
-                    if (this.userSearchQuery === '') return this.users;
-                    return this.users.filter(user =>
-                        user.name.toLowerCase().includes(this.userSearchQuery.toLowerCase()) ||
-                        user.apellidos.toLowerCase().includes(this.userSearchQuery.toLowerCase()) ||
-                        user.dni.toLowerCase().includes(this.userSearchQuery.toLowerCase())
-                    );
-                },
-                cambiarFilteredUsers() {
-                    // Excluir usuarios ya seleccionados excepto el actual
-                    return this.users.filter(user =>
-                        (user.name.toLowerCase().includes(this.cambiarUserSearchQuery.toLowerCase()) ||
-                        user.apellidos.toLowerCase().includes(this.cambiarUserSearchQuery.toLowerCase()) ||
-                        user.dni.toLowerCase().includes(this.cambiarUserSearchQuery.toLowerCase()))
-                        && !this.selectedUsers.some((u, idx) => u.id === user.id && idx !== this.cambiarUsuarioIdx)
-                    );
-                },
-                openUserModal() {
-                    this.isUserModalOpen = true;
-                },
-                closeUserModal() {
-                    this.isUserModalOpen = false;
-                },
-                addUser(user) {
-                    // Evitar agregar duplicados
-                    if (!this.selectedUsers.find(u => u.id === user.id)) {
-                        user.entradas = {}; // inicializar entradas vacío
-                        this.selectedUsers.push(user);
-                    }
-                    this.closeUserModal();
-
-                    // Guardar automáticamente el usuario sin horarios (campos null)
-                    let payload = [{
-                        user_id: user.id,
-                        fecha: null,
-                        hora_inicio: null,
-                        hora_fin: null,
-                    }];
-
-                    fetch(`{{ route('horarios.entradas.guardar', ['horario' => $horario->id]) }}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            entradas: payload
-                        })
-                    })
-                    .then(response => {
-                        const contentType = response.headers.get('content-type');
-                        if (!response.ok) throw new Error('Error al guardar');
-                        if (contentType && contentType.indexOf('application/json') !== -1) {
-                            return response.json();
-                        } else {
-                            throw new Error('Respuesta inesperada del servidor');
-                        }
-                    })
-                    .then(data => {
-                        // Opcional: mostrar mensaje o recargar usuarios si quieres feedback inmediato
-                        // Swal.fire({ icon: 'success', title: 'Usuario añadido', text: 'Usuario añadido correctamente' });
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Hubo un error al añadir el usuario. Por favor, revisa los datos o inténtalo de nuevo.'
-                        });
-                    });
-                },
-                abrirModalHorario(user, fecha, idx = null) {
-                    this.modalUser = user;
-                    this.modalFecha = fecha;
-                    this.modalEntradaIdx = idx;
-
-                    // Obtener la última hora_fin del día si se va a añadir uno nuevo
-                    let minHoraInicio = '';
-                    if (
-                        idx === null &&
-                        user.entradas &&
-                        user.entradas[fecha] &&
-                        Array.isArray(user.entradas[fecha]) &&
-                        user.entradas[fecha].length
-                    ) {
-                        // Buscar la mayor hora_fin de los horarios existentes ese día
-                        let maxHoraFin = user.entradas[fecha]
-                            .map(e => e.hora_fin)
-                            .sort()
-                            .pop();
-                        minHoraInicio = maxHoraFin ? maxHoraFin.substring(0,5) : '';
-                    }
-
-                    if (idx !== null && user.entradas && user.entradas[fecha] && Array.isArray(user.entradas[fecha]) && user.entradas[fecha][idx]) {
-                        this.modalHoraInicio = user.entradas[fecha][idx].hora_inicio;
-                        this.modalHoraFin = user.entradas[fecha][idx].hora_fin;
-                    } else {
-                        this.modalHoraInicio = '';
-                        this.modalHoraFin = '';
-                    }
-
-                    this.isHorarioModalOpen = true;
-
-                    // Guardar el mínimo para validación posterior
-                    this.minHoraInicio = minHoraInicio;
-                },
-                cerrarModalHorario() {
-                    this.isHorarioModalOpen = false;
-                    this.modalUser = null;
-                    this.modalFecha = null;
-                    this.modalHoraInicio = '';
-                    this.modalHoraFin = '';
-                    this.modalEntradaIdx = null;
-                },
-                guardarHorario() {
-                    // Validación de campos vacíos
-                    if (!this.modalHoraInicio || !this.modalHoraFin) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Campos requeridos',
-                            text: 'Por favor, completa hora inicio y hora fin'
-                        });
-                        return;
-                    }
-                    // Validar que la hora de inicio no sea menor que la última hora_fin del día
-                    if (this.modalEntradaIdx === null && this.minHoraInicio) {
-                        if (this.modalHoraInicio < this.minHoraInicio) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Hora inválida',
-                                text: 'La hora de inicio debe ser igual o posterior a la hora de salida del último horario de ese día: ' + this.minHoraInicio
-                            });
-                            return;
-                        }
-                    }
-                    if (!this.modalUser.entradas) this.modalUser.entradas = {};
-                    if (!this.modalUser.entradas[this.modalFecha] || !Array.isArray(this.modalUser.entradas[this.modalFecha])) {
-                        this.modalUser.entradas[this.modalFecha] = [];
-                    }
-                    if (this.modalEntradaIdx !== null) {
-                        // Editar horario existente
-                        this.modalUser.entradas[this.modalFecha][this.modalEntradaIdx] = {
-                            hora_inicio: this.modalHoraInicio,
-                            hora_fin: this.modalHoraFin
-                        };
-                    } else {
-                        // Añadir nuevo horario
-                        this.modalUser.entradas[this.modalFecha].push({
-                            hora_inicio: this.modalHoraInicio,
-                            hora_fin: this.modalHoraFin
-                        });
-                    }
-                    this.cerrarModalHorario();
-                },
-                guardarEntradas() {
-                    // Construir payload plano para enviar al backend
-                    let payload = [];
-
-                    // Siempre enviar todos los usuarios, aunque no tengan horarios
-                    this.selectedUsers.forEach(user => {
-                        let tieneHorarios = false;
-                        if (user.entradas && Object.keys(user.entradas).length > 0) {
-                            Object.entries(user.entradas).forEach(([fecha, entradas]) => {
-                                if (Array.isArray(entradas) && entradas.length > 0) {
-                                    entradas.forEach(entrada => {
-                                        if (entrada && entrada.hora_inicio && entrada.hora_fin) {
-                                            tieneHorarios = true;
-                                            payload.push({
-                                                user_id: user.id,
-                                                fecha,
-                                                hora_inicio: entrada.hora_inicio,
-                                                hora_fin: entrada.hora_fin,
-                                            });
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <script>
+                document.addEventListener('alpine:init', () => {
+                    Alpine.data('cuadrante', () => ({
+                        isUserModalOpen: false,
+                        userSearchQuery: '',
+                        isHorarioModalOpen: false,
+                        modalUser: null,
+                        modalFecha: null,
+                        modalHoraInicio: '',
+                        modalHoraFin: '',
+                        modalEntradaIdx: null,
+                        isCambiarUsuarioModalOpen: false,
+                        cambiarUserSearchQuery: '',
+                        cambiarUsuarioIdx: null,
+                        users: @json($usuarios),
+                        fechas: @json($fechas),
+                        maxDias: 7,
+                        fechaStart: 0,
+                        selectedUsers: (() => {
+                            // Normalizar entradas para que siempre sean arrays
+                            let usuarios = @json($usuariosConEntrada);
+                            usuarios.forEach(user => {
+                                if (user.entradas) {
+                                    Object.keys(user.entradas).forEach(fecha => {
+                                        if (!Array.isArray(user.entradas[fecha])) {
+                                            // Si es un objeto simple, conviértelo en array
+                                            user.entradas[fecha] = [user.entradas[fecha]];
                                         }
                                     });
                                 }
                             });
-                        }
-                        // Si no tiene ningún horario, enviar igualmente el usuario con campos nulos
-                        if (!tieneHorarios) {
-                            payload.push({
+                            return usuarios;
+                        })(),
+                        checkedEntradas: [],
+                        checkedCrear: [],
+                        _modificarSeleccionados: [],
+                        _modificarVarios: false,
+                        init() {
+                            // Calcular la posición inicial para mostrar la franja de 7 días que incluye la fecha actual
+                            const today = new Date().toISOString().split('T')[0]; // Obtener la fecha actual en formato YYYY-MM-DD
+                            const indexToday = this.fechas.findIndex(fecha => fecha === today);
+                            if (indexToday !== -1) {
+                                this.fechaStart = Math.max(0, indexToday - Math.floor(this.maxDias / 2));
+                            }
+                        },
+                        filteredUsers() {
+                            if (this.userSearchQuery === '') return this.users;
+                            return this.users.filter(user =>
+                                user.name.toLowerCase().includes(this.userSearchQuery.toLowerCase()) ||
+                                user.apellidos.toLowerCase().includes(this.userSearchQuery.toLowerCase()) ||
+                                user.dni.toLowerCase().includes(this.userSearchQuery.toLowerCase())
+                            );
+                        },
+                        cambiarFilteredUsers() {
+                            // Excluir usuarios ya seleccionados excepto el actual
+                            return this.users.filter(user =>
+                                (user.name.toLowerCase().includes(this.cambiarUserSearchQuery.toLowerCase()) ||
+                                user.apellidos.toLowerCase().includes(this.cambiarUserSearchQuery.toLowerCase()) ||
+                                user.dni.toLowerCase().includes(this.cambiarUserSearchQuery.toLowerCase()))
+                                && !this.selectedUsers.some((u, idx) => u.id === user.id && idx !== this.cambiarUsuarioIdx)
+                            );
+                        },
+                        openUserModal() {
+                            this.isUserModalOpen = true;
+                        },
+                        closeUserModal() {
+                            this.isUserModalOpen = false;
+                        },
+                        addUser(user) {
+                            // Evitar agregar duplicados
+                            if (!this.selectedUsers.find(u => u.id === user.id)) {
+                                user.entradas = {}; // inicializar entradas vacío
+                                this.selectedUsers.push(user);
+                            }
+                            this.closeUserModal();
+
+                            // Guardar automáticamente el usuario sin horarios (campos null)
+                            let payload = [{
                                 user_id: user.id,
                                 fecha: null,
                                 hora_inicio: null,
                                 hora_fin: null,
-                            });
-                        }
-                    });
+                            }];
 
-                    fetch(`{{ route('horarios.entradas.guardar', ['horario' => $horario->id]) }}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            entradas: payload
-                        })
-                    })
-                    .then(response => {
-                        // Si la respuesta no es JSON, mostrar error amigable
-                        const contentType = response.headers.get('content-type');
-                        if (!response.ok) throw new Error('Error al guardar');
-                        if (contentType && contentType.indexOf('application/json') !== -1) {
-                            return response.json();
-                        } else {
-                            throw new Error('Respuesta inesperada del servidor');
-                        }
-                    })
-                    .then(data => {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Guardado',
-                            text: 'Horarios guardados correctamente'
-                        }).then(() => {
-                            window.location.reload(); // Recargar para reflejar los cambios guardados
-                        });
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Hubo un error al guardar los horarios. Por favor, revisa los datos o inténtalo de nuevo.'
-                        });
-                    });
-                },
-                eliminarUsuario(userId) {
-                    this.selectedUsers = this.selectedUsers.filter(u => u.id !== userId);
-                },
-                eliminarHorario(user, fecha, idx) {
-                    if (user.entradas && user.entradas[fecha] && Array.isArray(user.entradas[fecha])) {
-                        user.entradas[fecha].splice(idx, 1);
-                    }
-                },
-                abrirCambiarUsuario(selectedUser) {
-                    this.cambiarUsuarioIdx = this.selectedUsers.findIndex(u => u.id === selectedUser.id);
-                    this.cambiarUserSearchQuery = '';
-                    this.isCambiarUsuarioModalOpen = true;
-                },
-                cerrarCambiarUsuario() {
-                    this.isCambiarUsuarioModalOpen = false;
-                    this.cambiarUsuarioIdx = null;
-                },
-                cambiarUsuarioSeleccionado(user) {
-                    if (this.cambiarUsuarioIdx !== null) {
-                        // Mantener los horarios del usuario anterior
-                        let oldEntradas = this.selectedUsers[this.cambiarUsuarioIdx].entradas || {};
-                        this.selectedUsers[this.cambiarUsuarioIdx] = {
-                            ...user,
-                            entradas: oldEntradas
-                        };
-                    }
-                    this.cerrarCambiarUsuario();
-                },
-                mostrarAccionesUsuario(selectedUser) {
-                    Swal.fire({
-                        title: (selectedUser.apodo && selectedUser.apodo.trim() !== '' ? selectedUser.apodo : selectedUser.name) + ' ' + selectedUser.apellidos,
-                        showCancelButton: true,
-                        showDenyButton: true,
-                        confirmButtonText: 'Cambiar usuario',
-                        denyButtonText: 'Eliminar',
-                        cancelButtonText: 'Cancelar',
-                        icon: 'info'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.abrirCambiarUsuario(selectedUser);
-                        } else if (result.isDenied) {
-                            this.eliminarUsuario(selectedUser.id);
-                        }
-                    });
-                },
-            }));
-        });
-
-        // Vaciar cuadrante
-        document.addEventListener('DOMContentLoaded', function () {
-            const btn = document.getElementById('vaciar-cuadrante-btn');
-            if (btn) {
-                btn.addEventListener('click', function () {
-                    Swal.fire({
-                        title: '¿Vaciar cuadrante?',
-                        text: 'Se eliminarán todos los horarios y usuarios de este cuadrante. Esta acción no se puede deshacer.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        cancelButtonColor: '#3085d6',
-                        confirmButtonText: 'Sí, vaciar',
-                        cancelButtonText: 'Cancelar'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            fetch("{{ route('horarios.vaciar', ['horario' => $horario->id]) }}", {
-                                method: 'DELETE',
+                            fetch(`{{ route('horarios.entradas.guardar', ['horario' => $horario->id]) }}`, {
+                                method: 'POST',
                                 headers: {
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                    'Accept': 'application/json'
-                                }
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    entradas: payload
+                                })
                             })
                             .then(response => {
-                                if (!response.ok) throw new Error('Error al vaciar cuadrante');
-                                return response.json();
+                                const contentType = response.headers.get('content-type');
+                                if (!response.ok) throw new Error('Error al guardar');
+                                if (contentType && contentType.indexOf('application/json') !== -1) {
+                                    return response.json();
+                                } else {
+                                    throw new Error('Respuesta inesperada del servidor');
+                                }
                             })
                             .then(data => {
-                                Swal.fire('¡Vaciado!', 'El cuadrante ha sido vaciado.', 'success')
-                                    .then(() => window.location.reload());
+                                // Opcional: mostrar mensaje o recargar usuarios si quieres feedback inmediato
+                                // Swal.fire({ icon: 'success', title: 'Usuario añadido', text: 'Usuario añadido correctamente' });
                             })
-                            .catch(() => {
-                                Swal.fire('Error', 'No se pudo vaciar el cuadrante.', 'error');
+                            .catch(error => {
+                                console.error(error);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Hubo un error al añadir el usuario. Por favor, revisa los datos o inténtalo de nuevo.'
+                                });
                             });
-                        }
-                    });
+                        },
+                        crearSeleccionados() {
+                            if (!this.checkedCrear.length) return;
+                            // Para cada selección, abrir el modal para crear el horario (uno a uno)
+                            // Si quieres crear todos a la vez con los mismos datos, puedes abrir el modal para el primero y luego aplicar a todos
+                            const [userId, fecha] = this.checkedCrear[0].split('|');
+                            const user = this.selectedUsers.find(u => u.id == userId);
+                            if (user && fecha) {
+                                this._crearSeleccionados = this.checkedCrear.map(val => {
+                                    const [userId, fecha] = val.split('|');
+                                    return { userId, fecha };
+                                });
+                                this.abrirModalHorario(user, fecha, null, false, true);
+                            }
+                        },
+                        abrirModalHorario(user, fecha, idx = null, modificarVarios = false, crearVarios = false) {
+                            this.modalUser = user;
+                            this.modalFecha = fecha;
+                            this.modalEntradaIdx = idx;
+                            this._modificarVarios = modificarVarios || false;
+                            this._crearVarios = crearVarios || false;
+
+                            let minHoraInicio = '';
+                            if (
+                                idx === null &&
+                                user.entradas &&
+                                user.entradas[fecha] &&
+                                Array.isArray(user.entradas[fecha]) &&
+                                user.entradas[fecha].length
+                            ) {
+                                let maxHoraFin = user.entradas[fecha]
+                                    .map(e => e.hora_fin)
+                                    .sort()
+                                    .pop();
+                                minHoraInicio = maxHoraFin ? maxHoraFin.substring(0,5) : '';
+                            }
+
+                            if (idx !== null && user.entradas && user.entradas[fecha] && Array.isArray(user.entradas[fecha]) && user.entradas[fecha][idx]) {
+                                this.modalHoraInicio = user.entradas[fecha][idx].hora_inicio;
+                                this.modalHoraFin = user.entradas[fecha][idx].hora_fin;
+                            } else {
+                                this.modalHoraInicio = '';
+                                this.modalHoraFin = '';
+                            }
+
+                            this.isHorarioModalOpen = true;
+                            this.minHoraInicio = minHoraInicio;
+                        },
+                        cerrarModalHorario() {
+                            this.isHorarioModalOpen = false;
+                            this.modalUser = null;
+                            this.modalFecha = null;
+                            this.modalHoraInicio = '';
+                            this.modalHoraFin = '';
+                            this.modalEntradaIdx = null;
+                        },
+                        guardarHorario() {
+                            // Validación de campos vacíos
+                            if (!this.modalHoraInicio || !this.modalHoraFin) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Campos requeridos',
+                                    text: 'Por favor, completa hora inicio y hora fin'
+                                });
+                                return;
+                            }
+                            // Validar que la hora de inicio no sea menor que la última hora_fin del día
+                            if (this.modalEntradaIdx === null && this.minHoraInicio) {
+                                if (this.modalHoraInicio < this.minHoraInicio) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Hora inválida',
+                                        text: 'La hora de inicio debe ser igual o posterior a la hora de salida del último horario de ese día: ' + this.minHoraInicio
+                                    });
+                                    return;
+                                }
+                            }
+                            if (this._modificarVarios && Array.isArray(this._modificarSeleccionados) && this._modificarSeleccionados.length > 0) {
+                                // Modificar todos los seleccionados
+                                this._modificarSeleccionados.forEach(sel => {
+                                    const user = this.selectedUsers.find(u => u.id == sel.userId);
+                                    if (user && user.entradas && user.entradas[sel.fecha] && user.entradas[sel.fecha][sel.idx]) {
+                                        user.entradas[sel.fecha][sel.idx].hora_inicio = this.modalHoraInicio;
+                                        user.entradas[sel.fecha][sel.idx].hora_fin = this.modalHoraFin;
+                                    }
+                                });
+                                this.checkedEntradas = [];
+                                this._modificarSeleccionados = [];
+                                this._modificarVarios = false;
+                            } else if (this._crearVarios && Array.isArray(this._crearSeleccionados) && this._crearSeleccionados.length > 0) {
+                                // Crear todos los seleccionados
+                                this._crearSeleccionados.forEach(sel => {
+                                    const user = this.selectedUsers.find(u => u.id == sel.userId);
+                                    if (!user.entradas) user.entradas = {};
+                                    if (!user.entradas[sel.fecha] || !Array.isArray(user.entradas[sel.fecha])) {
+                                        user.entradas[sel.fecha] = [];
+                                    }
+                                    user.entradas[sel.fecha].push({
+                                        hora_inicio: this.modalHoraInicio,
+                                        hora_fin: this.modalHoraFin
+                                    });
+                                });
+                                this.checkedCrear = [];
+                                this._crearSeleccionados = [];
+                                this._crearVarios = false;
+                            } else {
+                                if (!this.modalUser.entradas) this.modalUser.entradas = {};
+                                if (!this.modalUser.entradas[this.modalFecha] || !Array.isArray(this.modalUser.entradas[this.modalFecha])) {
+                                    this.modalUser.entradas[this.modalFecha] = [];
+                                }
+                                if (this.modalEntradaIdx !== null) {
+                                    // Editar horario existente
+                                    this.modalUser.entradas[this.modalFecha][this.modalEntradaIdx] = {
+                                        hora_inicio: this.modalHoraInicio,
+                                        hora_fin: this.modalHoraFin
+                                    };
+                                } else {
+                                    // Añadir nuevo horario
+                                    this.modalUser.entradas[this.modalFecha].push({
+                                        hora_inicio: this.modalHoraInicio,
+                                        hora_fin: this.modalHoraFin
+                                    });
+                                }
+                            }
+                            this.cerrarModalHorario();
+                        },
+                        guardarEntradas() {
+                            let payload = [];
+
+                            // Guardar horarios existentes seleccionados
+                            this.selectedUsers.forEach(user => {
+                                let tieneHorarios = false;
+                                if (user.entradas && Object.keys(user.entradas).length > 0) {
+                                    Object.entries(user.entradas).forEach(([fecha, entradas]) => {
+                                        if (Array.isArray(entradas) && entradas.length > 0) {
+                                            entradas.forEach(entrada => {
+                                                if (entrada && entrada.hora_inicio && entrada.hora_fin) {
+                                                    tieneHorarios = true;
+                                                    payload.push({
+                                                        user_id: user.id,
+                                                        fecha,
+                                                        hora_inicio: entrada.hora_inicio,
+                                                        hora_fin: entrada.hora_fin,
+                                                    });
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                                // Si no tiene ningún horario, enviar igualmente el usuario con campos nulos
+                                if (!tieneHorarios) {
+                                    payload.push({
+                                        user_id: user.id,
+                                        fecha: null,
+                                        hora_inicio: null,
+                                        hora_fin: null,
+                                    });
+                                }
+                            });
+
+                            // Crear nuevos horarios para los checks de crear
+                            if (this.checkedCrear && this.checkedCrear.length > 0) {
+                                this.checkedCrear.forEach(val => {
+                                    const [userId, fecha] = val.split('|');
+                                    payload.push({
+                                        user_id: userId,
+                                        fecha: fecha,
+                                        hora_inicio: '09:00', // valor por defecto, puedes cambiarlo
+                                        hora_fin: '17:00',    // valor por defecto, puedes cambiarlo
+                                    });
+                                });
+                                this.checkedCrear = [];
+                            }
+
+                            fetch(`{{ route('horarios.entradas.guardar', ['horario' => $horario->id]) }}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    entradas: payload
+                                })
+                            })
+                            .then(response => {
+                                const contentType = response.headers.get('content-type');
+                                if (!response.ok) throw new Error('Error al guardar');
+                                if (contentType && contentType.indexOf('application/json') !== -1) {
+                                    return response.json();
+                                } else {
+                                    throw new Error('Respuesta inesperada del servidor');
+                                }
+                            })
+                            .then(data => {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Guardado',
+                                    text: 'Horarios guardados correctamente'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            })
+                            .catch(error => {
+                                console.error(error);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Hubo un error al guardar los horarios. Por favor, revisa los datos o inténtalo de nuevo.'
+                                });
+                            });
+                        },
+                        eliminarUsuario(userId) {
+                            this.selectedUsers = this.selectedUsers.filter(u => u.id !== userId);
+                        },
+                        eliminarHorario(user, fecha, idx) {
+                            if (user.entradas && user.entradas[fecha] && Array.isArray(user.entradas[fecha])) {
+                                user.entradas[fecha].splice(idx, 1);
+                            }
+                        },
+                        abrirCambiarUsuario(selectedUser) {
+                            this.cambiarUsuarioIdx = this.selectedUsers.findIndex(u => u.id === selectedUser.id);
+                            this.cambiarUserSearchQuery = '';
+                            this.isCambiarUsuarioModalOpen = true;
+                        },
+                        cerrarCambiarUsuario() {
+                            this.isCambiarUsuarioModalOpen = false;
+                            this.cambiarUsuarioIdx = null;
+                        },
+                        cambiarUsuarioSeleccionado(user) {
+                            if (this.cambiarUsuarioIdx !== null) {
+                                // Mantener los horarios del usuario anterior
+                                let oldEntradas = this.selectedUsers[this.cambiarUsuarioIdx].entradas || {};
+                                this.selectedUsers[this.cambiarUsuarioIdx] = {
+                                    ...user,
+                                    entradas: oldEntradas
+                                };
+                            }
+                            this.cerrarCambiarUsuario();
+                        },
+                        mostrarAccionesUsuario(selectedUser) {
+                            Swal.fire({
+                                title: (selectedUser.apodo && selectedUser.apodo.trim() !== '' ? selectedUser.apodo : selectedUser.name) + ' ' + selectedUser.apellidos,
+                                showCancelButton: true,
+                                showDenyButton: true,
+                                confirmButtonText: 'Cambiar usuario',
+                                denyButtonText: 'Eliminar',
+                                cancelButtonText: 'Cancelar',
+                                icon: 'info'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    this.abrirCambiarUsuario(selectedUser);
+                                } else if (result.isDenied) {
+                                    this.eliminarUsuario(selectedUser.id);
+                                }
+                            });
+                        },
+                        eliminarSeleccionados() {
+                            this.checkedEntradas.forEach(val => {
+                                const [userId, fecha, idx] = val.split('|');
+                                const user = this.selectedUsers.find(u => u.id == userId);
+                                if (user && user.entradas && user.entradas[fecha] && Array.isArray(user.entradas[fecha])) {
+                                    user.entradas[fecha].splice(idx, 1);
+                                }
+                            });
+                            this.checkedEntradas = [];
+                        },
+                        modificarSeleccionados() {
+                            if (this.checkedEntradas.length === 0) return;
+                            // Guardar los seleccionados para modificar después
+                            this._modificarSeleccionados = this.checkedEntradas.map(val => {
+                                const [userId, fecha, idx] = val.split('|');
+                                return { userId, fecha, idx: Number(idx) };
+                            });
+                            // Tomar el primero para abrir el modal con sus datos
+                            const sel = this._modificarSeleccionados[0];
+                            const user = this.selectedUsers.find(u => u.id == sel.userId);
+                            if (!user || !user.entradas || !user.entradas[sel.fecha] || !user.entradas[sel.fecha][sel.idx]) return;
+                            this.abrirModalHorario(user, sel.fecha, sel.idx, true);
+                        },
+                    }));
                 });
-            }
-        });
-    </script>
+
+                // Vaciar cuadrante
+                document.addEventListener('DOMContentLoaded', function () {
+                    const btn = document.getElementById('vaciar-cuadrante-btn');
+                    if (btn) {
+                        btn.addEventListener('click', function () {
+                            Swal.fire({
+                                title: '¿Vaciar cuadrante?',
+                                text: 'Se eliminarán todos los horarios y usuarios de este cuadrante. Esta acción no se puede deshacer.',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#d33',
+                                cancelButtonColor: '#3085d6',
+                                confirmButtonText: 'Sí, vaciar',
+                                cancelButtonText: 'Cancelar'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    fetch("{{ route('horarios.vaciar', ['horario' => $horario->id]) }}", {
+                                        method: 'DELETE',
+                                        headers: {
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                            'Accept': 'application/json'
+                                        }
+                                    })
+                                    .then(response => {
+                                        if (!response.ok) throw new Error('Error al vaciar cuadrante');
+                                        return response.json();
+                                    })
+                                    .then(data => {
+                                        Swal.fire('¡Vaciado!', 'El cuadrante ha sido vaciado.', 'success')
+                                            .then(() => window.location.reload());
+                                    })
+                                    .catch(() => {
+                                        Swal.fire('Error', 'No se pudo vaciar el cuadrante.', 'error');
+                                    });
+                                }
+                            });
+                        });
+                    }
+                });
+            </script>
+        </div>
+    </div>
 </x-app-layout>

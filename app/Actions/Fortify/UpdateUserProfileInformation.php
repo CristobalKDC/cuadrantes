@@ -17,12 +17,20 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
      */
     public function update(User $user, array $input): void
     {
+        // Normalizar el teléfono: quitar espacios si existe
+        if (isset($input['telefono'])) {
+            $input['telefono'] = preg_replace('/\s+/', '', $input['telefono']);
+        }
+
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'apellidos' => ['required', 'string', 'max:255'],
             'apodo' => ['nullable', 'string', 'max:255'],
+            'telefono' => ['nullable', 'regex:/^\d{9}$/'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:1024'],
+        ], [
+            'telefono.regex' => 'El teléfono debe tener exactamente 9 dígitos numéricos.',
         ])->validateWithBag('updateProfileInformation');
 
         if (isset($input['photo'])) {
@@ -37,6 +45,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 'name' => $input['name'],
                 'apellidos' => $input['apellidos'],
                 'apodo' => $input['apodo'],
+                'telefono' => $input['telefono'] ?? null,
                 'email' => $input['email'],
             ])->save();
         }
