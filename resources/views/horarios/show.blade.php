@@ -92,12 +92,14 @@
                                 </td>
                                 <template x-for="(fecha, idx) in fechas.slice(fechaStart, Math.min(fechaStart + maxDias, fechas.length))" :key="fecha">
                                     <td
-                                        class="border p-2"
+                                        class="border p-2 relative cursor-pointer"
                                         :class="{
-                                            'bg-yellow-100': new Date(fecha) > new Date(), // Día futuro
-                                            'bg-red-100': new Date(fecha) < new Date().setHours(0, 0, 0, 0), // Día pasado
-                                            'bg-green-100': new Date(fecha).toDateString() === new Date().toDateString() // Día actual
+                                            'bg-yellow-100': new Date(fecha) > new Date(),
+                                            'bg-red-100': new Date(fecha) < new Date().setHours(0, 0, 0, 0),
+                                            'bg-green-100': new Date(fecha).toDateString() === new Date().toDateString(),
+                                            'bg-blue-200': seleccionMultipleCrear && checkedCrear.includes(selectedUser.id + '|' + fecha)
                                         }"
+                                        @click="seleccionMultipleCrear ? toggleCrearSeleccion(selectedUser.id + '|' + fecha) : null"
                                     >
                                         <template x-if="selectedUser.entradas && selectedUser.entradas[fecha] && Array.isArray(selectedUser.entradas[fecha]) && selectedUser.entradas[fecha].length">
                                             <div>
@@ -115,51 +117,28 @@
                                                         <span x-text="'De ' + entrada.hora_inicio.substring(0,5) + ' a ' + entrada.hora_fin.substring(0,5)"></span>
                                                     </div>
                                                 </template>
-                                                @if($es_jefe)
-                                                <div class="mt-1 flex items-center justify-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        :id="'add-' + selectedUser.id + '-' + fecha"
-                                                        x-model="checkedCrear"
-                                                        :value="selectedUser.id + '|' + fecha"
-                                                        class="mr-2"
-                                                    >
-                                                    <label :for="'add-' + selectedUser.id + '-' + fecha" class="text-indigo-700 cursor-pointer text-sm">Añadir horario</label>
-                                                    
-                                                </div>
-                                                @endif
                                             </div>
                                         </template>
                                         <template x-if="!selectedUser.entradas || !selectedUser.entradas[fecha] || (Array.isArray(selectedUser.entradas[fecha]) && selectedUser.entradas[fecha].length === 0)">
                                             <div>
-                                                <span class="text-gray-400 text-xs" x-show="!checkedCrear.includes(selectedUser.id + '|' + fecha)">Sin horario</span>
-                                                @if($es_jefe)
-                                                <div class="mt-1 flex items-center justify-center">
-                                                    <button
-                                                        type="button"
-                                                        class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-sm"
-                                                        @click="checkedCrear.push(selectedUser.id + '|' + fecha)"
-                                                        x-show="!checkedCrear.includes(selectedUser.id + '|' + fecha)"
-                                                    >
-                                                        Crear horario
-                                                    </button>
-                                                    <template x-if="checkedCrear.includes(selectedUser.id + '|' + fecha)">
-                                                        <div class="flex items-center">
-                                                            <input
-                                                                type="checkbox"
-                                                                :id="'crear-' + selectedUser.id + '-' + fecha"
-                                                                x-model="checkedCrear"
-                                                                :value="selectedUser.id + '|' + fecha"
-                                                                class="mr-2"
-                                                            >
-                                                            <label :for="'crear-' + selectedUser.id + '-' + fecha" class="text-indigo-700 cursor-pointer text-sm">Crear horario</label>
-                                                            
-                                                        </div>
-                                                    </template>
-                                                </div>
-                                                @endif
+                                                <span class="text-gray-400 text-xs" x-show="false">Sin horario</span>
                                             </div>
                                         </template>
+                                        @if($es_jefe)
+                                        <!-- Icono "+" fijo abajo a la derecha de la celda, más pequeño -->
+                                        <button
+                                            type="button"
+                                            class="absolute bottom-1 right-1 text-indigo-700 hover:text-indigo-900 p-0.5 rounded-full bg-white shadow"
+                                            title="Añadir horario"
+                                            @click.stop="abrirModalHorario(selectedUser, fecha)"
+                                            style="z-index:10;"
+                                            x-show="!seleccionMultipleCrear"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                            </svg>
+                                        </button>
+                                        @endif
                                     </td>
                                 </template>
                                 
@@ -283,15 +262,6 @@
             @if($es_jefe)
             <div class="mt-6 flex flex-row justify-between items-center">
                 <div class="flex gap-2">
-                    <template x-if="checkedCrear.length > 0">
-                        <button
-                            type="button"
-                            class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-                            @click="crearSeleccionados"
-                        >
-                            Crear horarios seleccionados
-                        </button>
-                    </template>
                     <template x-if="checkedEntradas.length > 0">
                         <button
                             type="button"
@@ -299,6 +269,37 @@
                             @click="modificarSeleccionados"
                         >
                             Modificar seleccionados
+                        </button>
+                    </template>
+                    <!-- Nuevo botón para crear varios horarios -->
+                    <template x-if="true">
+                        <button
+                            type="button"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                            @click="activarSeleccionMultipleCrear"
+                            x-show="!seleccionMultipleCrear"
+                        >
+                            Crear varios horarios
+                        </button>
+                    </template>
+                    <!-- Botón para crear los horarios seleccionados -->
+                    <template x-if="seleccionMultipleCrear && checkedCrear.length > 0">
+                        <button
+                            type="button"
+                            class="bg-indigo-700 text-white px-4 py-2 rounded hover:bg-indigo-800"
+                            @click="crearSeleccionados"
+                        >
+                            Crear horarios seleccionados
+                        </button>
+                    </template>
+                    <!-- Botón para cancelar selección múltiple -->
+                    <template x-if="seleccionMultipleCrear">
+                        <button
+                            type="button"
+                            class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                            @click="cancelarSeleccionMultipleCrear"
+                        >
+                            Cancelar
                         </button>
                     </template>
                     <template x-if="checkedEntradas.length > 0">
@@ -357,6 +358,19 @@
                         checkedCrear: [],
                         _modificarSeleccionados: [],
                         _modificarVarios: false,
+                        seleccionMultipleCrear: false,
+                        cancelarSeleccionMultipleCrear() {
+                            this.seleccionMultipleCrear = false;
+                            this.checkedCrear = [];
+                        },
+                        toggleCrearSeleccion(valor) {
+                            const idx = this.checkedCrear.indexOf(valor);
+                            if (idx === -1) {
+                                this.checkedCrear.push(valor);
+                            } else {
+                                this.checkedCrear.splice(idx, 1);
+                            }
+                        },
                         init() {
                             // Calcular la posición inicial para mostrar la franja de 7 días que incluye la fecha actual
                             const today = new Date().toISOString().split('T')[0]; // Obtener la fecha actual en formato YYYY-MM-DD
@@ -438,17 +452,18 @@
                         },
                         crearSeleccionados() {
                             if (!this.checkedCrear.length) return;
-                            // Para cada selección, abrir el modal para crear el horario (uno a uno)
-                            // Si quieres crear todos a la vez con los mismos datos, puedes abrir el modal para el primero y luego aplicar a todos
+                            // Guardar los seleccionados para crear después
+                            this._crearSeleccionados = this.checkedCrear.map(val => {
+                                const [userId, fecha] = val.split('|');
+                                return { userId, fecha };
+                            });
+                            // Abrir el modal para el primero seleccionado
                             const [userId, fecha] = this.checkedCrear[0].split('|');
                             const user = this.selectedUsers.find(u => u.id == userId);
                             if (user && fecha) {
-                                this._crearSeleccionados = this.checkedCrear.map(val => {
-                                    const [userId, fecha] = val.split('|');
-                                    return { userId, fecha };
-                                });
                                 this.abrirModalHorario(user, fecha, null, false, true);
                             }
+                            // Al terminar, desactivar selección múltiple (se desactiva tras guardar en guardarHorario)
                         },
                         abrirModalHorario(user, fecha, idx = null, modificarVarios = false, crearVarios = false) {
                             this.modalUser = user;
@@ -501,17 +516,59 @@
                                 });
                                 return;
                             }
-                            // Validar que la hora de inicio no sea menor que la última hora_fin del día
-                            if (this.modalEntradaIdx === null && this.minHoraInicio) {
-                                if (this.modalHoraInicio < this.minHoraInicio) {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Hora inválida',
-                                        text: 'La hora de inicio debe ser igual o posterior a la hora de salida del último horario de ese día: ' + this.minHoraInicio
-                                    });
-                                    return;
+
+                            // Validar hora_inicio respecto al horario anterior real (según el orden de los horarios)
+                            if (this.modalUser && this.modalFecha && this.modalUser.entradas && this.modalUser.entradas[this.modalFecha]) {
+                                let entradas = this.modalUser.entradas[this.modalFecha];
+                                // Ordenar por hora_inicio
+                                let entradasOrdenadas = entradas.slice().sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
+
+                                // Si estamos modificando varios, buscar el menor índice seleccionado
+                                if (this._modificarVarios && Array.isArray(this._modificarSeleccionados) && this._modificarSeleccionados.length > 0) {
+                                    // Obtener los índices de los seleccionados en el array ordenado
+                                    let indicesSeleccionados = this._modificarSeleccionados.map(sel => {
+                                        const entrada = entradas[sel.idx];
+                                        return entradasOrdenadas.findIndex(e =>
+                                            e.hora_inicio === entrada.hora_inicio && e.hora_fin === entrada.hora_fin
+                                        );
+                                    }).sort((a, b) => a - b);
+
+                                    // Si no se seleccionan todos, comprobar el anterior al primero seleccionado
+                                    if (indicesSeleccionados.length < entradasOrdenadas.length && indicesSeleccionados[0] > 0) {
+                                        let anterior = entradasOrdenadas[indicesSeleccionados[0] - 1];
+                                        if (anterior && anterior.hora_fin && this.modalHoraInicio <= anterior.hora_fin) {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Hora inválida',
+                                                text: 'La hora de inicio debe ser posterior a la hora de salida del horario anterior de ese día: ' + anterior.hora_fin
+                                            });
+                                            return;
+                                        }
+                                    }
+                                } else {
+                                    // Modificación individual o creación
+                                    let idxEnOrden = entradasOrdenadas.length;
+                                    if (this.modalEntradaIdx !== null) {
+                                        // Buscar el índice real del horario que se está editando en el array ordenado
+                                        const actual = entradas[this.modalEntradaIdx];
+                                        idxEnOrden = entradasOrdenadas.findIndex(e =>
+                                            e.hora_inicio === actual.hora_inicio && e.hora_fin === actual.hora_fin
+                                        );
+                                    }
+                                    if (idxEnOrden > 0) {
+                                        let anterior = entradasOrdenadas[idxEnOrden - 1];
+                                        if (anterior && anterior.hora_fin && this.modalHoraInicio <= anterior.hora_fin) {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Hora inválida',
+                                                text: 'La hora de inicio debe ser posterior a la hora de salida del horario anterior de ese día: ' + anterior.hora_fin
+                                            });
+                                            return;
+                                        }
+                                    }
                                 }
                             }
+
                             if (this._modificarVarios && Array.isArray(this._modificarSeleccionados) && this._modificarSeleccionados.length > 0) {
                                 // Modificar todos los seleccionados
                                 this._modificarSeleccionados.forEach(sel => {
@@ -713,6 +770,10 @@
                             const user = this.selectedUsers.find(u => u.id == sel.userId);
                             if (!user || !user.entradas || !user.entradas[sel.fecha] || !user.entradas[sel.fecha][sel.idx]) return;
                             this.abrirModalHorario(user, sel.fecha, sel.idx, true);
+                        },
+                        activarSeleccionMultipleCrear() {
+                            this.seleccionMultipleCrear = true;
+                            this.checkedCrear = [];
                         },
                     }));
                 });
