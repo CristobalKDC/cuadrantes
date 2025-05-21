@@ -24,7 +24,11 @@
                         <td class="border px-4 py-2">{{ $cuadrante->fecha_fin }}</td>
                         <td class="border px-4 py-2">
                             <a href="{{ route('cuadrantes.edit', $cuadrante->id) }}" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">Editar</a>
-                            <!-- Puedes añadir más acciones aquí -->
+                            <form action="{{ route('cuadrantes.destroy', $cuadrante->id) }}" method="POST" class="inline-block delete-form">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm delete-button">Eliminar</button>
+                            </form>
                         </td>
                     </tr>
                 @empty
@@ -38,4 +42,26 @@
             <a href="{{ route('dashboard') }}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Volver al menú principal</a>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.querySelectorAll('.delete-button').forEach(button => {
+            button.addEventListener('click', function () {
+                const form = this.closest('.delete-form');
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "¡No podrás revertir esto!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
 </x-app-layout>

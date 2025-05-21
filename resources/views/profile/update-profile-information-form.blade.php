@@ -67,19 +67,18 @@
         </div>
 
         <!-- Apodo con checkbox -->
-        <div class="col-span-6 sm:col-span-4">
+        <div class="col-span-6 sm:col-span-4" x-data="{ usarApodo: {{ !empty($state['apodo']) ? 'true' : 'false' }} }">
             <div class="mb-4 flex items-center">
                 <input
                     type="checkbox"
                     id="mostrar_apodo"
-                    {{ !empty($state['apodo']) ? 'checked' : '' }}
-                    onclick="document.getElementById('apodo-input-group').style.display = this.checked ? 'block' : 'none';"
+                    x-model="usarApodo"
+                    x-on:change="if (!usarApodo) { $wire.set('state.apodo', ''); }"
                     class="mr-2"
                 >
                 <label for="mostrar_apodo" class="text-sm text-gray-700">¿Usar apodo?</label>
             </div>
-            <div id="apodo-input-group" style="{{ !empty($state['apodo']) ? '' : 'display:none;' }}">
-                
+            <div x-show="usarApodo" style="display: none;">
                 <label for="apodo" class="block text-sm font-medium text-gray-700">Apodo</label>
                 <x-input
                     type="text"
@@ -93,9 +92,15 @@
                 <x-input-error for="apodo" class="mt-2" />
                 <p class="text-sm text-gray-500 mt-1">Para eliminar el apodo, vaciar el cuadro de apodo.</p>
             </div>
-            
         </div>
         <!-- Fin apodo -->
+
+        <!-- DNI -->
+        <div class="col-span-6 sm:col-span-4">
+            <x-label for="dni" value="dni" />
+            <x-input id="dni" type="text" class="mt-1 block w-full" wire:model="state.dni" />
+            <x-input-error for="dni" class="mt-2" />
+        </div>
 
         <!-- Email -->
         <div class="col-span-6 sm:col-span-4">

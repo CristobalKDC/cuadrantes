@@ -16,7 +16,7 @@
                     <thead class="bg-gray-100">
                         <tr>
                             <th class="border p-2">Título</th>
-                            <th class="border p-2">Fecha de creación</th>
+                            <th class="border p-2">Fecha del cuadrante</th>
                             <th class="border p-2">Acciones</th>
                         </tr>
                     </thead>
@@ -24,7 +24,7 @@
                         @foreach($cuadrantes as $cuadrante)
                             <tr>
                                 <td class="border p-2">{{ $cuadrante->titulo }}</td>
-                                <td class="border p-2">{{ $cuadrante->created_at->format('d/m/Y H:i') }}</td>
+                                <td class="border p-2">De {{ $cuadrante->fecha_inicio }} a {{ $cuadrante->fecha_fin }}</td>
                                 <td class="border p-2 flex items-center gap-2">
                                     <a href="{{ route('horarios.show', $cuadrante->id) }}" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">
                                         Modificar horarios

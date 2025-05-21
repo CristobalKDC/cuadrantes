@@ -18,14 +18,15 @@
 
     <div class="py-6" x-data="cuadrante()">
         <div class="w-[80%] mx-auto sm:px-6 lg:px-8 bg-white p-6 shadow rounded" style="overflow-x:auto;">
-            <a href="{{ $es_jefe ? route('cuadrantes.index') : route('cuadrantes.usuario') }}" class="inline-block mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition text-sm ml-2">
-                ← Volver a todos los cuadrantes
-            </a>
             @if($es_jefe)
                 <a href="{{ route('dashboard') }}" class="inline-block mb-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition text-sm">
                     ← Volver al menú principal.
                 </a>
             @endif
+            <a href="{{ $es_jefe ? route('cuadrantes.index') : route('cuadrantes.usuario') }}" class="inline-block mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition text-sm ml-2">
+                ← Volver a todos los cuadrantes
+            </a>
+            
             @if($es_jefe)
             <button
                 id="vaciar-cuadrante-btn"
@@ -92,11 +93,13 @@
                                 </td>
                                 <template x-for="(fecha, idx) in fechas.slice(fechaStart, Math.min(fechaStart + maxDias, fechas.length))" :key="fecha">
                                     <td
-                                        class="border p-2 relative cursor-pointer"
+                                        class="border p-2 relative"
                                         :class="{
-                                            'bg-yellow-100': new Date(fecha) > new Date(),
-                                            'bg-red-100': new Date(fecha) < new Date().setHours(0, 0, 0, 0),
-                                            'bg-green-100': new Date(fecha).toDateString() === new Date().toDateString(),
+                                            'cursor-pointer': seleccionMultipleCrear,
+                                            'cursor-default': !seleccionMultipleCrear,
+                                            'bg-yellow-100': new Date(fecha) > new Date() && (!seleccionMultipleCrear || !checkedCrear.includes(selectedUser.id + '|' + fecha)),
+                                            'bg-red-100': new Date(fecha) < new Date().setHours(0, 0, 0, 0) && (!seleccionMultipleCrear || !checkedCrear.includes(selectedUser.id + '|' + fecha)),
+                                            'bg-green-100': new Date(fecha).toDateString() === new Date().toDateString() && (!seleccionMultipleCrear || !checkedCrear.includes(selectedUser.id + '|' + fecha)),
                                             'bg-blue-200': seleccionMultipleCrear && checkedCrear.includes(selectedUser.id + '|' + fecha)
                                         }"
                                         @click="seleccionMultipleCrear ? toggleCrearSeleccion(selectedUser.id + '|' + fecha) : null"
@@ -566,6 +569,32 @@
                                             return;
                                         }
                                     }
+                                }
+                            }
+
+                            // Validar hora_inicio respecto a la hora_fin más tardía de las casillas seleccionadas
+                            if (this._crearVarios && Array.isArray(this._crearSeleccionados) && this._crearSeleccionados.length > 0) {
+                                let maxHoraFin = null;
+
+                                this._crearSeleccionados.forEach(sel => {
+                                    const user = this.selectedUsers.find(u => u.id == sel.userId);
+                                    if (user && user.entradas && user.entradas[sel.fecha]) {
+                                        const entradas = user.entradas[sel.fecha];
+                                        entradas.forEach(entrada => {
+                                            if (entrada.hora_fin && (!maxHoraFin || entrada.hora_fin > maxHoraFin)) {
+                                                maxHoraFin = entrada.hora_fin;
+                                            }
+                                        });
+                                    }
+                                });
+
+                                if (maxHoraFin && this.modalHoraInicio <= maxHoraFin) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Hora inválida',
+                                        text: `La hora de inicio debe ser posterior a la hora de salida más tardía: ${maxHoraFin}`
+                                    });
+                                    return;
                                 }
                             }
 

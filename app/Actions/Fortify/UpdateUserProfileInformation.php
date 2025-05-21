@@ -26,6 +26,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'name' => ['required', 'string', 'max:255'],
             'apellidos' => ['required', 'string', 'max:255'],
             'apodo' => ['nullable', 'string', 'max:255'],
+            'dni' => ['required', 'regex:/^[0-9]{8}[A-Z]$/'],
             'telefono' => ['nullable', 'regex:/^\d{9}$/'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:1024'],
@@ -45,6 +46,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 'name' => $input['name'],
                 'apellidos' => $input['apellidos'],
                 'apodo' => $input['apodo'],
+                'dni' => $input['dni'],
                 'telefono' => $input['telefono'] ?? null,
                 'email' => $input['email'],
             ])->save();
