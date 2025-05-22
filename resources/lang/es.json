@@ -33,6 +33,12 @@
     "Permanently delete your account.": "Eliminar permanentemente tu cuenta.",
     "Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.": "Una vez que tu cuenta sea eliminada, todos sus recursos y datos serán eliminados permanentemente. Antes de eliminar tu cuenta, por favor descarga cualquier dato o información que desees conservar.",
     "Whoops! Something went wrong.": "¡Vaya! Algo salió mal.",
-    "The dni field format is invalid.": "El formato del campo dni es inválido."
+    "The dni field format is invalid.": "El formato del campo dni es inválido.",
+    "Forgot your password?": "¿Olvidaste tu contraseña?",
+    "Remember me": "Recuérdame",
+    "Log in": "Iniciar sesión",
+    "Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.": "¿Olvidaste tu contraseña? No hay problema. Solo háznoslo saber tu dirección de correo electrónico y te enviaremos un enlace para restablecer la contraseña que te permitirá elegir una nueva.",
+    "Email Password Reset Link": "Restablecer contraseña"
+
 
 }

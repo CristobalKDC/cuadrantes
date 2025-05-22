@@ -391,12 +391,12 @@
                             );
                         },
                         cambiarFilteredUsers() {
-                            // Excluir usuarios ya seleccionados excepto el actual
+                            // Excluir al usuario seleccionado (cambiarUsuarioIdx) de la lista de usuarios filtrados
                             return this.users.filter(user =>
                                 (user.name.toLowerCase().includes(this.cambiarUserSearchQuery.toLowerCase()) ||
                                 user.apellidos.toLowerCase().includes(this.cambiarUserSearchQuery.toLowerCase()) ||
-                                user.dni.toLowerCase().includes(this.cambiarUserSearchQuery.toLowerCase()))
-                                && !this.selectedUsers.some((u, idx) => u.id === user.id && idx !== this.cambiarUsuarioIdx)
+                                user.dni.toLowerCase().includes(this.cambiarUserSearchQuery.toLowerCase())) &&
+                                (!this.selectedUsers[this.cambiarUsuarioIdx] || user.id !== this.selectedUsers[this.cambiarUsuarioIdx].id)
                             );
                         },
                         openUserModal() {
@@ -751,13 +751,57 @@
                         },
                         cambiarUsuarioSeleccionado(user) {
                             if (this.cambiarUsuarioIdx !== null) {
-                                // Mantener los horarios del usuario anterior
-                                let oldEntradas = this.selectedUsers[this.cambiarUsuarioIdx].entradas || {};
+                                const currentUser = this.selectedUsers[this.cambiarUsuarioIdx];
+
+                                // Verificar si el usuario ya está en el cuadrante
+                                const existingUserIdx = this.selectedUsers.findIndex(u => u.id === user.id);
+
+                                if (existingUserIdx !== -1) {
+                                    // Intercambiar posiciones entre el usuario actual y el seleccionado
+                                    this.selectedUsers[existingUserIdx] = currentUser;
+                                }
+
+                                // Reemplazar el usuario actual con el seleccionado
                                 this.selectedUsers[this.cambiarUsuarioIdx] = {
                                     ...user,
-                                    entradas: oldEntradas
+                                    entradas: currentUser.entradas // Mantener los horarios del usuario actual
                                 };
+
+                                // Enviar solicitud al servidor para actualizar los user_id
+                                fetch(`{{ route('horarios.cambiarUsuario', ['horario' => $horario->id]) }}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    },
+                                    body: JSON.stringify({
+                                        antiguo_user_id: currentUser.id,
+                                        nuevo_user_id: user.id
+                                    })
+                                })
+                                .then(response => {
+                                    if (!response.ok) throw new Error('Error al actualizar los horarios');
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Usuario cambiado',
+                                        text: 'Los horarios se han actualizado correctamente.'
+                                    }).then(() => {
+                                        window.location.reload(); // Recargar la página después de aceptar el mensaje
+                                    });
+                                })
+                                .catch(error => {
+                                    console.error(error);
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: 'Hubo un problema al actualizar los horarios. Por favor, inténtalo de nuevo.'
+                                    });
+                                });
                             }
+
                             this.cerrarCambiarUsuario();
                         },
                         mostrarAccionesUsuario(selectedUser) {

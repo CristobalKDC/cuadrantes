@@ -50,6 +50,8 @@ Route::post('/horarios/{horario}/entradas/guardar', [HorarioController::class, '
 
 Route::delete('/horarios/{horario}/vaciar', [HorarioController::class, 'vaciar'])->name('horarios.vaciar');
 
+Route::post('/horarios/{horario}/cambiar-usuario', [HorarioController::class, 'cambiarUsuario'])->name('horarios.cambiarUsuario');
+
 Route::resource('horarios', HorarioController::class);
 
 // Ruta para actualizar apodo y mostrar_apodo desde el formulario personalizado del perfil

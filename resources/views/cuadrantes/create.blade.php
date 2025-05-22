@@ -32,6 +32,7 @@
                     <div class="mb-4">
                         <label for="titulo" class="block text-left text-lg font-medium text-gray-700">Título</label>
                         <input type="text" id="titulo" name="titulo" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Ingresa el título del cuadrante">
+                        <p class="text-sm text-gray-500 mt-1">Dejalo vacio y genera un titulo automatico con las fechas.</p>
                     </div>
 
                     <input type="hidden" name="fecha_inicio" :value="inicio">

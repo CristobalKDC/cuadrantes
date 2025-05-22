@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class HorarioController extends Controller
 {
@@ -152,5 +153,40 @@ class HorarioController extends Controller
         })->get();
 
         return view('cuadrantes.cuadrantesUsuario', compact('cuadrantes'));
+    }
+
+    public function cambiarUsuario(Request $request, $horarioId)
+    {
+        $request->validate([
+            'antiguo_user_id' => 'required|exists:users,id',
+            'nuevo_user_id' => 'required|exists:users,id',
+        ]);
+
+        // Obtener los horarios del usuario antiguo
+        $horariosAntiguo = DB::table('horario_entradas')
+            ->where('horario_id', $horarioId)
+            ->where('user_id', $request->antiguo_user_id)
+            ->get();
+
+        // Obtener los horarios del usuario nuevo
+        $horariosNuevo = DB::table('horario_entradas')
+            ->where('horario_id', $horarioId)
+            ->where('user_id', $request->nuevo_user_id)
+            ->get();
+
+        // Intercambiar los user_id manteniendo las posiciones de los horarios
+        foreach ($horariosAntiguo as $horario) {
+            DB::table('horario_entradas')
+                ->where('id', $horario->id)
+                ->update(['user_id' => $request->nuevo_user_id]);
+        }
+
+        foreach ($horariosNuevo as $horario) {
+            DB::table('horario_entradas')
+                ->where('id', $horario->id)
+                ->update(['user_id' => $request->antiguo_user_id]);
+        }
+
+        return response()->json(['message' => 'Horarios actualizados correctamente.']);
     }
 }
