@@ -31,7 +31,12 @@
                 font-weight: bold;
                 color: #FF2D20; /* Color destacado */
                 text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Sombra para resaltar */
-                z-index: 10; /* Asegura que esté encima del contenido */
+                z-index: 5; /* Reducido para que no opaque los botones */
+            }
+            @media (max-width: 640px) {
+                nav {
+                    margin-top: 100px; /* Añade espacio para evitar superposición */
+                }
             }
         </style>
     </head>
